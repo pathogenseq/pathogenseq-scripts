@@ -1,0 +1,59 @@
+#! /usr/bin/env python
+import sys
+from collections import defaultdict
+import argparse
+
+def main(args):
+	col = args.column-1
+	lines = defaultdict(list)
+	ordered_keys = []
+	numfields = 0
+	for l in open(args.file):
+		line = l.rstrip()
+		arr = line.split(args.sep)
+		lines[arr[col]].append(line)
+		ordered_keys.append(arr[col])
+		numfields = len(arr)
+	query = []
+	for l in sys.stdin:
+		query.append(l.rstrip())
+
+	if args.inverse:
+		for key in ordered_keys:
+			if key in query:
+				continue
+			for x in lines[key]:
+				print(x)
+	elif args.not_present:
+		for key in query:
+			if key not in lines:
+				print(key)
+	else:
+		for key in query:
+			if args.strict:
+				if key not in lines:
+					sys.stderr.write("="*40+"\n")
+					sys.stderr.write("ERROR: %s not found\n" % key)
+					sys.stderr.write("="*40+"\n")
+					quit()
+			if key in lines:
+				for x in lines[key]:
+					print(x)
+			elif args.NA:
+				newline = ["NA" for i in range(numfields)]
+				newline[col] = key
+				newline = args.sep.join(newline)
+				print(newline)
+
+parser = argparse.ArgumentParser(description='TBProfiler pipeline',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('file',type=str,help='File to search in')
+parser.add_argument('column',type=int,help='Column number')
+parser.add_argument('--NA',action="store_true",help='Print missing')
+parser.add_argument('--inverse',action="store_true",help='Print only lines with IDs not in input')
+parser.add_argument('--not-present',action="store_true",help='Print IDs which are not in file')
+parser.add_argument('--strict',action="store_true",help='Quit if ID not found')
+parser.add_argument('--sep',type=str,default="\t",help='Seperator for file')
+parser.set_defaults(func=main)
+
+args = parser.parse_args()
+args.func(args)

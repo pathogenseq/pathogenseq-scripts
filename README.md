@@ -7,6 +7,12 @@ To be as useable, scripts should:
 * Work with standard genomic formats such as FASTA, FASTQ, BAM, etc..
 * Not be too fussy with versions of software
 
+## Misc scripts
+
+|  Script name               |  Description   |          Data requirements          | Software requirements |
+|----------------------------------|---------|-------------------------|--|
+| cgrep    | Given a list of keywords as stdin, finds lines in a file with the keyword in a specific column number. |  | |
+
 
 ## Whole genome assembly
 ### Finding/Extracting genes from whole/draft genomes
