@@ -59,6 +59,7 @@ class blast_aln:
 		self.end = best_hsp.sbjct_end
 		self.identities = best_hsp.identities
 		self.proportion = best_hsp.align_length/rec.query_length
+		self.frame = best_hsp.frame[1]
 
 def load_gff(gff,gene_name_prefix="Name",gene_id_prefix="gene"):
 	genes = []
@@ -126,13 +127,14 @@ def main(args):
 		quit("Alignment length to query length proportion is %s for %s" % (gene1_hsp.proportion,args.gene1))
 	elif (gene2_hsp.proportion<0.9 or gene2_hsp.proportion>1.1):
 		quit("Alignment length to query length proportion is %s for %s" % (gene2_hsp.proportion,args.gene2))
-
+	elif (gene1_hsp.frame!=gene2_hsp.frame):
+		quit("Genes are on different frame in the query sequence")
 	region_start = min([gene1_hsp.start,gene1_hsp.end,gene2_hsp.start,gene2_hsp.end])
 	region_end = max([gene1_hsp.start,gene1_hsp.end,gene2_hsp.start,gene2_hsp.end])
 
 	prefix = args.query.replace(".fasta","").replace(".fa","")
 	outfile = "%s_%s_%s.fasta" % (prefix,args.gene1,args.gene2)
-	extract_seq(args.query,gene1_hsp.seq,region_start,region_end,outfile=outfile,revcom=args.revcom)
+	extract_seq(args.query,gene1_hsp.seq,region_start,region_end,outfile=outfile,revcom=args.revcom if gene1_hsp.frame==1 else not args.revcom)
 
 	if args.mafft:
 		region_start = min([gene1.start,gene1.end,gene2.start,gene2.end])
@@ -142,18 +144,22 @@ def main(args):
 		aln = "%s_%s_%s.aln" % (prefix,args.gene1,args.gene2)
 		run_cmd("cat %s %s > %s" % (ref_fasta,outfile,unaln))
 		run_cmd("mafft --clustalout %s  > %s" % (unaln,aln))
-
+	if not args.no_clean:
+		run_cmd("rm %s %s %s %s" % (gene1_blast_result,gene2_blast_result,gene1_fasta,gene2_fasta))
+		if args.mafft:
+			run_cmd("rm %s" % unaln)
 
 parser = argparse.ArgumentParser(description='TBProfiler pipeline',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('subject',type=str,help='NGS Platform')
-parser.add_argument('gff',default="pp-results",type=str,help='NGS Platform')
-parser.add_argument('gene1',type=str,help='NGS Platform')
-parser.add_argument('gene2',type=str,help='NGS Platform')
-parser.add_argument('query',type=str,help='NGS Platform')
-parser.add_argument('--revcom',action="store_true",help='NGS Platform')
-parser.add_argument('--mafft',action="store_true",help='NGS Platform')
-parser.add_argument('--gene-name-prefix',default="gene",help='Gene name prefix')
-parser.add_argument('--gene-id-prefix',default="Name",help='Gene ID prefix')
+parser.add_argument('subject',type=str,help='The reference genome')
+parser.add_argument('gff',default="pp-results",type=str,help='The reference genome GFF file')
+parser.add_argument('gene1',type=str,help='Gene anchor 1')
+parser.add_argument('gene2',type=str,help='Gene anchor 2')
+parser.add_argument('query',type=str,help='The query genome in which you would like to find the gene')
+parser.add_argument('--revcom',action="store_true",help='Reverse complement the output')
+parser.add_argument('--mafft',action="store_true",help='Perform alingment between the reference and query genomes for the extracted region with mafft')
+parser.add_argument('--gene-name-prefix',default="gene",help='Gene name prefix in the GFF. E.g. if the genes are coded like "gene=dnaA" in the GFF then this parameter should be "gene"')
+parser.add_argument('--gene-id-prefix',default="Name",help='Gene ID prefix. E.g. if the genes are coded like "Name=Rv0667" in the GFF then this parameter should be "Name"')
+parser.add_argument('--no-clean',action="store_true",help='Don\'t clean up temp files')
 parser.set_defaults(func=main)
 
 args = parser.parse_args()
