@@ -3,7 +3,9 @@
 This repository contains scripts which could be useful to the group.
 To be as useable, scripts should:
 * Be as agnostic to the organism/input data as possible
-* Not contain hard-coded variables which the user must change 
+* Not contain hard-coded variables which the user must change
+* Word with standard genomic formats such as FASTA, FASTQ, BAM, etc..
+* Not create SAM files
 
 ## Whole genome assembly
 ### Finding/Extracting genes from whole/draft genomes
