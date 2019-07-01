@@ -1,6 +1,7 @@
 # Pathogenseq scripts
 
 This repository contains scripts which could be useful to the group.
+Scripts should be as agnostic to the organism/input data as possible.
 
 ## Whole genome assembly
 ### Finding/Extracting genes from whole/draft genomes
