@@ -12,6 +12,7 @@ To be as useable, scripts should:
 |  Script name               |  Description   |          Data requirements          | Software requirements |
 |----------------------------------|---------|-------------------------|--|
 | cgrep    | Given a list of keywords as stdin, finds lines in a file with the keyword in a specific column number. |  | |
+| revcom    | Given sequence as stdin, prints out the reverse complement |  | |
 
 
 ## Whole genome assembly
