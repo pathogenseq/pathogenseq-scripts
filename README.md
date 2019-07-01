@@ -1,7 +1,9 @@
 # Pathogenseq scripts
 
 This repository contains scripts which could be useful to the group.
-Scripts should be as agnostic to the organism/input data as possible.
+To be as useable, scripts should:
+* Be as agnostic to the organism/input data as possible
+* Not contain hard-coded variables which the user must change 
 
 ## Whole genome assembly
 ### Finding/Extracting genes from whole/draft genomes
