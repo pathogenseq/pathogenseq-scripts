@@ -128,7 +128,7 @@ def main(args):
 	elif (gene2_hsp.proportion<0.9 or gene2_hsp.proportion>1.1):
 		quit("Alignment length to query length proportion is %s for %s" % (gene2_hsp.proportion,args.gene2))
 	elif (gene1_hsp.frame!=gene2_hsp.frame):
-		quit("Genes are on different frame in the query sequence")
+		sys.stderr.write("Genes are on different frame in the query sequence\n")
 	region_start = min([gene1_hsp.start,gene1_hsp.end,gene2_hsp.start,gene2_hsp.end])
 	region_end = max([gene1_hsp.start,gene1_hsp.end,gene2_hsp.start,gene2_hsp.end])
 
