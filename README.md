@@ -31,7 +31,7 @@ To be as useable, scripts should:
 #### Find number of query sequences occurrences in genome
 |  Script name |  Description | Data requirements | Software requirements |
 |--------------|--------------|-------------------|-----------------------|
-| find_primer_matches.py | Finds the number of times a sequence/motif/primer occurs in a reference genome | Reference genome and query sequences in FASTA | fuzznuc from the emboss package |
+| find_primer_matches.py | Finds the number of times a sequence/motif/primer occurs in a reference genome | Reference genome and query sequences in FASTA or CSV format (name first, primer second column) | fuzznuc from the emboss package |
 
 #### Annotating FASTA files
 |  Script name |  Description | Data requirements | Software requirements |

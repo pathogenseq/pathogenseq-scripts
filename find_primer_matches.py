@@ -5,6 +5,7 @@ import os.path
 import argparse
 from collections import defaultdict
 import random
+import csv
 rand_generator = random.SystemRandom()
 
 def get_random_file(prefix = None,extension=None):
@@ -68,7 +69,12 @@ def revcom(x):
 
 def main(args):
 	params = vars(args)
-	motifs = fa2dict(args.primers)
+	if args.primer_fasta:
+		motifs = fa2dict(args.primers)
+	else:
+		motifs = {}
+		for row in csv.reader(open(args.primer_csv)):
+			motifs[row[0]] = row[1]
 	results = {}
 	refgenome = fa2dict(args.genome)
 	for mname in motifs:
@@ -84,6 +90,7 @@ def main(args):
 				tmp_chrom = row[2]
 			elif row[1]=="HitCount:":
 				results[mname][tmp_chrom] = row[2]
+		run_cmd("rm %(tmp_results)s" % params,0)
 
 	sys.stdout.write("Primer\t%s\n" % ("\t".join(refgenome.keys())))
 	for m in motifs:
@@ -91,7 +98,9 @@ def main(args):
 
 
 parser = argparse.ArgumentParser(description='Assembly to VCF',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--primers','-p',help='Fasta file with kmers',required=True)
+group = parser.add_mutually_exclusive_group(required=True)
+group.add_argument('--primer-fasta','-f',help='Fasta file with primers')
+group.add_argument('--primer-csv','-c',help='CSV file with primers')
 parser.add_argument('--genome','-g',help='Reference genome',required=True)
 parser.add_argument('--out','-o',help='Output file',required=True)
 parser.add_argument('--threads','-t',default=2,help='Number of threads required file')
