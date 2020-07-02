@@ -17,7 +17,7 @@ def run_cmd(cmd,verbose=1):
 
 def main(args):
     prefix = args.bam.replace(".bam","")
-    run_cmd("samtools view %s.bam -h | paftools.js sam2paf -L - > %s.paf" % (prefix,prefix))
+    run_cmd("samtools view -F 2048 %s.bam -h | awk '$1 ~/^@/ || ($9<2000 && $9>-2000)' | paftools.js sam2paf -L - > %s.paf" % (prefix,prefix))
     run_cmd("paftools.js view -f maf %s.paf > %s.maf" % (prefix,prefix))
     mixed_calls_dict = {}
     run_cmd("gatk HaplotypeCaller -R %s -I %s.bam -OVI false -O /dev/stdout | bcftools view -a -M2 -m2 | bcftools query -f '%%POS\\t%%REF,%%ALT\\t[%%AD]\\n' > %s.af.txt" % (args.ref,prefix,prefix))
@@ -55,21 +55,21 @@ def main(args):
         start_index = bisect_left(mixed_call_list,start)
         end_index = bisect_left(mixed_call_list,end)
         mixed_calls = mixed_call_list[start_index:end_index]
+
+
         if len(mixed_calls)==0:
-#            O[random.randint(0,1)].write(read_name+"\n")
             other_reads.add(read_name)
         else:
-            # if read_name=="ERR2517030.1002":
-            #     import pdb; pdb.set_trace()
+
             offset = mixed_calls[0] - start
             allele = row2[6][offset]
+            if read_name=="M01637:70:000000000-C9DH7:1:2109:14384:17446":
+                print(mixed_calls,allele)
             if allele not in mixed_calls_dict[mixed_calls[0]]:
                 O[random.randint(0,1)].write(read_name+"\n")
             elif mixed_calls_dict[mixed_calls[0]][allele]<0.5:
-#                O[0].write(read_name+"\n")
                 minor_reads.add(read_name)
             else:
-#                O[1].write(read_name+"\n")
                 major_reads.add(read_name)
 
     for read_name in major_reads:
@@ -87,8 +87,8 @@ def main(args):
     run_cmd("gatk FilterSamReads -I %s.bam -O %s.minor.bam --FILTER includeReadList --READ_LIST_FILE %s.minor.txt" % (prefix,prefix,prefix))
 
 parser = argparse.ArgumentParser(description='TBProfiler pipeline',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('bam',type=str,help='The bam file you would like to split')
-parser.add_argument('ref',type=str,help='The bam file you would like to split')
+parser.add_argument('--bam',type=str,help='The bam file you would like to split',required=True)
+parser.add_argument('--ref',type=str,help='The reference file',required=True)
 #parser.add_argument('--no-clean',action="store_true",help='Don\'t clean up temp files')
 parser.set_defaults(func=main)
 
