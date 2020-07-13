@@ -5,7 +5,7 @@ import random
 import subprocess
 import argparse
 
-_version = "3.0.0"
+_version = "3.0.1"
 
 
 def run_cmd(cmd,verbose=1):
@@ -20,10 +20,11 @@ def run_cmd(cmd,verbose=1):
 
 def main(args):
     prefix = args.bam.replace(".bam","")
-    # run_cmd("samtools view -F 2048 %s.bam -h | awk '$1 ~/^@/ || ($9<2000 && $9>-2000)' | paftools.js sam2paf -L - > %s.paf" % (prefix,prefix))
-    # run_cmd("paftools.js view -f maf %s.paf > %s.maf" % (prefix,prefix))
+    run_cmd("samtools view -F 2048 %s.bam -h | awk '$1 ~/^@/ || ($9<2000 && $9>-2000)' | paftools.js sam2paf -L - > %s.paf" % (prefix,prefix))
+    run_cmd("paftools.js view -f maf %s.paf > %s.maf" % (prefix,prefix))
     mixed_calls_dict = {}
-    # run_cmd("gatk HaplotypeCaller -R %s -I %s.bam -OVI false -O /dev/stdout | bcftools view -a -M2 -m2 | bcftools query -f '%%POS\\t%%REF,%%ALT\\t[%%AD]\\n' > %s.af.txt" % (args.ref,prefix,prefix))
+    run_cmd("freebayes -f %s %s.bam | bcftools view -Oz -o %s.freebayes.vcf.gz" % (args.ref,prefix,prefix))
+    run_cmd("bcftools view -a -M2 -m2 %s.freebayes.vcf.gz | bcftools query -f '%%POS\\t%%REF,%%ALT\\t[%%AD]\\n' > %s.af.txt" % (prefix,prefix))
 
     for l in open("%s.af.txt" % prefix):
         row = l.rstrip().split()
@@ -59,8 +60,8 @@ def main(args):
         end_index = bisect_left(mixed_call_list,end)
         mixed_calls = mixed_call_list[start_index:end_index]
 
-        if read_name=="M01637:69:000000000-J2465:1:2102:9090:13026":
-            import pdb; pdb.set_trace()
+        #if read_name=="M01637:69:000000000-J2465:1:2102:9090:13026":
+        #    import pdb; pdb.set_trace()
         if len(mixed_calls)==0:
             other_reads.add(read_name)
         else:
@@ -88,6 +89,10 @@ def main(args):
 
     run_cmd("gatk FilterSamReads -I %s.bam -O %s.major.bam --FILTER includeReadList --READ_LIST_FILE %s.major.txt" % (prefix,prefix,prefix))
     run_cmd("gatk FilterSamReads -I %s.bam -O %s.minor.bam --FILTER includeReadList --READ_LIST_FILE %s.minor.txt" % (prefix,prefix,prefix))
+    run_cmd("samtools index %s.major.bam" % prefix)
+    run_cmd("samtools index %s.minor.bam" % prefix)
+    run_cmd("freebayes -f %s %s.major.bam | bcftools view -Oz -o %s.major.freebayes.vcf.gz" % (args.ref,prefix,prefix))
+    run_cmd("freebayes -f %s %s.minor.bam | bcftools view -Oz -o %s.minor.freebayes.vcf.gz" % (args.ref,prefix,prefix))
 
 parser = argparse.ArgumentParser(description='Bam splitting pipeline',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--bam',type=str,help='The bam file you would like to split',required=True)

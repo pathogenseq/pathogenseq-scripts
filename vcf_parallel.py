@@ -10,7 +10,7 @@ def main(args):
 
     cmd_to_run = "\"bcftools view -r {1} %s | %s | bcftools view -Oz -o %s_{2}.vcf.gz\"" % (args.vcf,args.cmd,randint)
     fm.run_cmd(f"{window_cmd} | parallel --bar -j {args.threads} --col-sep \" \" {cmd_to_run}", verbose=2)
-    fm.run_cmd("bcftools concat -Oz -o %s `%s | awk '{print \"%s.\"$2\".vcf.gz\"}'`" % (args.out,window_cmd,randint))
+    fm.run_cmd("bcftools concat -Oz -o %s `%s | awk '{print \"%s_\"$2\".vcf.gz\"}'`" % (args.out,window_cmd,randint))
     fm.run_cmd("rm `%s | awk '{print \"%s.\"$2\".vcf.gz*\"}'`" % (window_cmd,randint))
 
 
