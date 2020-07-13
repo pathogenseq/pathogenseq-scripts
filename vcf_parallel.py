@@ -8,7 +8,7 @@ def main(args):
 
     window_cmd = "bedtools makewindows -n %(chunks)s -g %(ref)s.fai | awk '{print $1\":\"$2+1\"-\"$3\" \"$1\"_\"$2+1\"_\"$3}'" % vars(args)
 
-    cmd_to_run = "\"bcftools view --threads %s -r {1} %s | %s | bcftools view  -Oz -o %s_{2}.vcf.gz\"" % (args.compression_threads,args.vcf,args.cmd,randint)
+    cmd_to_run = "\"bcftools view --threads %s -r {1} %s -Ou | %s | bcftools view  -Oz -o %s_{2}.vcf.gz\"" % (args.compression_threads,args.vcf,args.cmd,randint)
     fm.run_cmd(f"{window_cmd} | parallel --bar -j {args.threads} --col-sep \" \" {cmd_to_run}", verbose=2)
     fm.run_cmd("bcftools concat -Oz -o %s `%s | awk '{print \"%s_\"$2\".vcf.gz\"}'`" % (args.out,window_cmd,randint))
     fm.run_cmd("rm `%s | awk '{print \"%s_\"$2\".vcf.gz*\"}'`" % (window_cmd,randint))
