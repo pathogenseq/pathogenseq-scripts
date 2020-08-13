@@ -85,9 +85,9 @@ def main(args):
 
 
 parser = argparse.ArgumentParser(description='XXX pipeline',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--prefix',help='VCF file',required=True)
-parser.add_argument('--query',help='VCF file',required=True)
-parser.add_argument('--subject',help='VCF file',required=True)
+parser.add_argument('--prefix',help='Prefix for the result files',required=True)
+parser.add_argument('--query',help='Fasta with gene of interest',required=True)
+parser.add_argument('--subject',help='Fasta assembly to extract from',required=True)
 parser.add_argument('--anchor-size',default=40,help='VCF file')
 parser.set_defaults(func=main)
 args = parser.parse_args()
