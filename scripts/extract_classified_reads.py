@@ -42,14 +42,15 @@ def main(args):
 
     sys.stderr.write("Writing filtered fastq files\n")
     fm.filecheck(args.R1)
-    args.R1_filt = args.R1.replace(".fastq.gz","").replace(".fq.gz","").replace(".fastq","") + "kraken_filt.fastq.gz"
+    args.R1_filt = args.R1.replace(".fastq.gz","").replace(".fq.gz","").replace(".fastq","") + ".kraken2_filt.fastq.gz"
     fm.run_cmd("seqtk subseq %(R1)s %(tmp_file)s | gzip -c > %(R1_filt)s" % vars(args))
 
     if args.R2:
         fm.filecheck(args.R2)
-        args.R2_filt = args.R2.replace(".fastq.gz","").replace(".fq.gz","").replace(".fastq","") + "kraken_filt.fastq.gz"
+        args.R2_filt = args.R2.replace(".fastq.gz","").replace(".fq.gz","").replace(".fastq","") + ".kraken2_filt.fastq.gz"
         fm.run_cmd("seqtk subseq %(R2)s %(tmp_file)s | gzip -c > %(R2_filt)s" % vars(args))
 
+    fm.rm_files([args.tmp_file])
 
 
 parser = argparse.ArgumentParser(description='tbprofiler script',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
