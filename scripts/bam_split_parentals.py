@@ -19,13 +19,15 @@ def run_cmd(cmd,verbose=1):
         exit(1)
 
 def main(args):
-    prefix = args.bam.replace(".bam","")
-    run_cmd("samtools view -F 2048 %s.bam -h | awk '$1 ~/^@/ || ($9<2000 && $9>-2000)' | paftools.js sam2paf -L - > %s.paf" % (prefix,prefix))
-    run_cmd("paftools.js view -f maf %s.paf > %s.maf" % (prefix,prefix))
-    mixed_calls_dict = {}
-    run_cmd("freebayes -f %s %s.bam | bcftools view -Oz -o %s.freebayes.vcf.gz" % (args.ref,prefix,prefix))
-    run_cmd("bcftools view -a -M2 -m2 %s.freebayes.vcf.gz | bcftools query -f '%%POS\\t%%REF,%%ALT\\t[%%AD]\\n' > %s.af.txt" % (prefix,prefix))
+    prefix = args.bam
+    # run_cmd("samtools view -F 2048 %s -h | awk '$1 ~/^@/ || ($9<2000 && $9>-2000)' | paftools.js sam2paf -L - > %s.paf" % (prefix,prefix))
+    # run_cmd("paftools.js view -f maf %s.paf > %s.maf" % (prefix,prefix))
+    # run_cmd("freebayes -f %s %s | bcftools view -Oz -o %s.freebayes.vcf.gz" % (args.ref,prefix,prefix))
+    # run_cmd("bcftools view -a -M2 -m2 %s.freebayes.vcf.gz | bcftools query -f '%%POS\\t%%REF,%%ALT\\t[%%AD]\\n' > %s.af.txt" % (prefix,prefix))
+    # run_cmd("bcftools view -a %s.freebayes.vcf.gz | bcftools query -f '%%POS\\t%%REF,%%ALT\\t[%%AD]\\n' > %s.af.txt" % (prefix,prefix))
 
+    # quit()
+    mixed_calls_dict = {}
     for l in open("%s.af.txt" % prefix):
         row = l.rstrip().split()
         pos = int(row[0])
@@ -33,8 +35,14 @@ def main(args):
         ads = [int(x) for x in row[2].split(",")]
         if sum(ads)==0: continue
         afs = [x/sum(ads) for x in ads]#int(row[3])/(int(row[2])+int(row[3])) if len(alts)==1 else int(row[4])/(int(row[3])+int(row[4]))
-        if afs[0]<0.9 and afs[0]>0.1:
+        min_af = min([ad for ad in ads if ad!=0])/sum(ads)
+        # if pos==51170:
+            # import pdb; pdb.set_trace()
+        if min_af>0.1 and min_af<0.9:
+            # try:
             mixed_calls_dict[pos] = {alts[i]:afs[i] for i in range(len(alts))}
+            # except:
+                # import pdb; pdb.set_trace()
     mixed_call_list = list(mixed_calls_dict.keys())
     mixed_call_list_len = len(mixed_call_list)
     F = open("%s.maf" % prefix)
@@ -60,8 +68,9 @@ def main(args):
         end_index = bisect_left(mixed_call_list,end)
         mixed_calls = mixed_call_list[start_index:end_index]
 
-        #if read_name=="M01637:69:000000000-J2465:1:2102:9090:13026":
-        #    import pdb; pdb.set_trace()
+        # if read_name=="M01637:70:000000000-C9DH7:1:1105:24708:17531":
+                # import pdb; pdb.set_trace()
+
         if len(mixed_calls)==0:
             other_reads.add(read_name)
         else:
@@ -71,10 +80,10 @@ def main(args):
 
             if allele not in mixed_calls_dict[mixed_calls[0]]:
                 O[random.randint(0,1)].write(read_name+"\n")
-            elif mixed_calls_dict[mixed_calls[0]][allele]<0.5:
-                minor_reads.add(read_name)
-            else:
+            elif mixed_calls_dict[mixed_calls[0]][allele]>args.freq_lower and mixed_calls_dict[mixed_calls[0]][allele]<args.freq_upper:
                 major_reads.add(read_name)
+            else:
+                minor_reads.add(read_name)
 
     for read_name in major_reads:
         O[1].write(read_name+"\n")
@@ -87,16 +96,18 @@ def main(args):
     O[0].close()
     O[1].close()
 
-    run_cmd("gatk FilterSamReads -I %s.bam -O %s.major.bam --FILTER includeReadList --READ_LIST_FILE %s.major.txt" % (prefix,prefix,prefix))
-    run_cmd("gatk FilterSamReads -I %s.bam -O %s.minor.bam --FILTER includeReadList --READ_LIST_FILE %s.minor.txt" % (prefix,prefix,prefix))
+    run_cmd("gatk FilterSamReads -I %s -O %s.major.bam --FILTER includeReadList --READ_LIST_FILE %s.major.txt" % (prefix,prefix,prefix))
+    run_cmd("gatk FilterSamReads -I %s -O %s.minor.bam --FILTER includeReadList --READ_LIST_FILE %s.minor.txt" % (prefix,prefix,prefix))
     run_cmd("samtools index %s.major.bam" % prefix)
     run_cmd("samtools index %s.minor.bam" % prefix)
-    run_cmd("freebayes -f %s %s.major.bam | bcftools view -Oz -o %s.major.freebayes.vcf.gz" % (args.ref,prefix,prefix))
-    run_cmd("freebayes -f %s %s.minor.bam | bcftools view -Oz -o %s.minor.freebayes.vcf.gz" % (args.ref,prefix,prefix))
+    # run_cmd("freebayes -f %s %s.major.bam | bcftools view -Oz -o %s.major.freebayes.vcf.gz" % (args.ref,prefix,prefix))
+    # run_cmd("freebayes -f %s %s.minor.bam | bcftools view -Oz -o %s.minor.freebayes.vcf.gz" % (args.ref,prefix,prefix))
 
 parser = argparse.ArgumentParser(description='Bam splitting pipeline',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--bam',type=str,help='The bam file you would like to split',required=True)
 parser.add_argument('--ref',type=str,help='The reference file',required=True)
+parser.add_argument('--freq-lower',type=float,help='Lower bound frequency cutoff',required=True)
+parser.add_argument('--freq-upper',type=float,help='Higher bound frequency cutoff',required=True)
 #parser.add_argument('--no-clean',action="store_true",help='Don\'t clean up temp files')
 parser.add_argument('--version', action='version', version=_version)
 parser.set_defaults(func=main)
