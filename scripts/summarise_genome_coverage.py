@@ -3,6 +3,8 @@ import argparse
 import fastq2matrix as fm
 from collections import defaultdict
 import csv
+import os.path
+
 
 try:
     import statsmodels.stats.weightstats
@@ -28,7 +30,8 @@ def which(program):
 
 def main(args):
     which("bedtools")
-    # fm.run_cmd("bedtools genomecov -ibam %(bam)s > %(bam)s.genomecov.txt" % vars(args))
+    if not os.path.isfile(args.bam+".genomecov.txt"):
+        fm.run_cmd("bedtools genomecov -ibam %(bam)s > %(bam)s.genomecov.txt" % vars(args))
     dp = defaultdict(dict)
     for l in open(args.bam+".genomecov.txt"):
         row = l.strip().split()
@@ -45,9 +48,9 @@ def main(args):
                 "chrom":chrom,
                 "mean": d1.mean,
                 "std": d1.std,
-                "dp_0": 1-sum([dp[chrom][x]["fraction"] for x in [0]]),
-                "dp_5": 1-sum([dp[chrom][x]["fraction"] for x in range(6)]),
-                "dp_10": 1-sum([dp[chrom][x]["fraction"] for x in range(11)])
+                "dp_0": (1-sum([dp[chrom][x]["fraction"] for x in [0]])) * 100,
+                "dp_5": (1-sum([dp[chrom][x]["fraction"] for x in range(6)])) * 100,
+                "dp_10": (1-sum([dp[chrom][x]["fraction"] for x in range(11)])) * 100
             }
             writer.writerow(res)
 
