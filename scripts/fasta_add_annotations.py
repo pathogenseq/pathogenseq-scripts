@@ -38,20 +38,18 @@ def main(args):
 	fa = fasta(args.fasta).fa_dict
 	annotation_dict = {}
 	for row in csv.DictReader(open(args.csv)):
-		annotation_dict[row["id"]] = row
+		annotation_dict[row[args.id_key]] = row
 	if args.annotations:
 		annotations = args.annotations.split(",")
 	else:
 		annotations = list(list(annotation_dict.values())[0].keys())
 		if "id" in annotations:	annotations.remove("id")
 	new_fa = {}
+
 	for seq in fa:
-		if args.strict:
-			if seq not in annotations:
-				quit("%s not in annotations" % seq)
 		new_name = seq+args.sep+args.sep.join([annotation_dict[seq][d] for d in annotations])
 		new_fa[new_name] = fa[seq]
-		
+
 	with open(args.out,"w") as O:
 		for seq in new_fa:
 			O.write(">%s\n%s\n" % (seq,new_fa[seq]))
@@ -61,8 +59,8 @@ parser.add_argument('--fasta',type=str,help='File to search in',required=True)
 parser.add_argument('--csv',type=str,help='File to search in',required=True)
 parser.add_argument('--out',type=str,help='File to search in',required=True)
 parser.add_argument('--annotations',type=str,help='Comma separated list of annotations to include')
-parser.add_argument('--strict',action="store_true",help='Quit if ID not found')
 parser.add_argument('--sep',type=str,default="_",help='Seperator for file')
+parser.add_argument('--id-key',type=str,default="id",help='ID key in metadata')
 parser.set_defaults(func=main)
 
 args = parser.parse_args()
