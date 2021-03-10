@@ -6,6 +6,35 @@ import random
 import os
 rand_generator = random.SystemRandom()
 
+def which(program):
+	import os
+	def is_exe(fpath):
+		return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+	fpath, fname = os.path.split(program)
+	if fpath:
+		if is_exe(program):
+			return program
+	else:
+		for path in os.environ["PATH"].split(os.pathsep):
+			exe_file = os.path.join(path, program)
+			if is_exe(exe_file):
+				return exe_file
+
+	return None
+
+software_ok = True
+for p in ["bedtools","parallel","bcftools","datamash"]:
+	sys.stderr.write("Looking for {}...".format(p))
+	if not which(p):
+		software_ok = False
+		sys.stderr.write("Not found\n")
+	else:
+		sys.stderr.write("Ok\n")
+
+if not software_ok:
+	sys.exit("\nError: some dependencies not found, please install before continuing\n")
+
 def get_random_file(prefix = None,extension=None):
 	randint = rand_generator.randint(1,999999)
 	if prefix:
@@ -89,7 +118,7 @@ class vcf_class:
 		self.cmd_split_chr = "bedtools makewindows -g %(ref_file)s.fai -w %(chunk_size)s -s  %(chunk_size)s | awk '{print $1\":\"$2\"-\"$3}'" % vars(self)
 		self.tmp_file = "%s.tmp.txt" % self.prefix
 		self.threads = threads
-		cmd = "%(cmd_split_chr)s | parallel -j %(threads)s \"bcftools view  %(filename)s -r {} -Ou | bcftools query -f '%%POS[\\t%%IUPACGT]\\n' | sed 's/\*[\/|]\*/\.\/\./g' |  datamash transpose > %(prefix)s.{}.tmp.txt\"" % vars(self)
+		cmd = "%(cmd_split_chr)s | parallel -j %(threads)s \"bcftools view  %(filename)s -r {} | bcftools view -V indels | bcftools query -f '%%POS[\\t%%IUPACGT]\\n' | sed 's/\.[\/|]\./N/g' |  datamash transpose > %(prefix)s.{}.tmp.txt\"" % vars(self)
 		run_cmd(cmd)
 		cmd = "paste `%(cmd_split_chr)s | awk '{print \"%(prefix)s.\"$1\".tmp.txt\"}'` > %(tmp_file)s" % vars(self)
 		run_cmd(cmd)
@@ -100,7 +129,7 @@ class vcf_class:
 				row = l.rstrip().split()
 				if i==0: continue
 				s = self.samples[i-1]
-				seq = "".join(row).replace("./.","N")
+				seq = "".join(row)
 				O.write(">%s\n%s\n" % ( s,seq))
 		run_cmd("rm %s" % self.tmp_file)
 
