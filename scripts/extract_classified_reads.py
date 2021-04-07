@@ -90,7 +90,7 @@ def main(args):
         fm.run_cmd("seqtk subseq %(R2)s %(tmp_file)s | gzip -c > %(R2_filt)s" % vars(args))
 
     fm.rm_files([args.tmp_file])
-    sys.stderr.write("\nKept %s/%s reads\n" % (total_reads,kept_reads))
+    sys.stderr.write("\nKept %s/%s reads\n" % (kept_reads,total_reads))
 
 parser = argparse.ArgumentParser(description='tbprofiler script',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('-1','--R1',type=str,help='Forward reads',required=True)
