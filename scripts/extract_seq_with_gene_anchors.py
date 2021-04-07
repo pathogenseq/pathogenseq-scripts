@@ -72,9 +72,9 @@ def load_gff(gff,gene_name_prefix="Name",gene_id_prefix="gene"):
 		p1 = int(fields[3])
 		p2 = int(fields[4])
 		gene_length = p2-p1+1
-		re_obj = re.search("%s=([a-zA-Z0-9\.\-\_]+)" % gene_id_prefix,l)
-		gene_name = re_obj.group(1) if re_obj else "NA"
 		re_obj = re.search("%s=([a-zA-Z0-9\.\-\_]+)" % gene_name_prefix,l)
+		gene_name = re_obj.group(1) if re_obj else "NA"
+		re_obj = re.search("%s=([a-zA-Z0-9\.\-\_]+)" % gene_id_prefix,l)
 		locus_tag = re_obj.group(1) if re_obj else "NA"
 		start = p1 if strand=="+" else p2
 		end =  p2 if strand=="+" else p1
@@ -107,6 +107,7 @@ def blast_seq(subject,query,result):
 def main(args):
 	genes = load_gff(args.gff,gene_name_prefix=args.gene_name_prefix,gene_id_prefix=args.gene_id_prefix)
 	tmp = [g for g in genes if g.locus_tag==args.gene1]
+	print(tmp)
 	if len(tmp)==0: exit("Can't find %s in gff" % args.gene1)
 	gene1 = tmp[0]
 	tmp = [g for g in genes if g.locus_tag==args.gene2]
@@ -158,7 +159,7 @@ parser.add_argument('query',type=str,help='The query genome in which you would l
 parser.add_argument('--revcom',action="store_true",help='Reverse complement the output')
 parser.add_argument('--mafft',action="store_true",help='Perform alingment between the reference and query genomes for the extracted region with mafft')
 parser.add_argument('--gene-name-prefix',default="gene",help='Gene name prefix in the GFF. E.g. if the genes are coded like "gene=dnaA" in the GFF then this parameter should be "gene"')
-parser.add_argument('--gene-id-prefix',default="Name",help='Gene ID prefix. E.g. if the genes are coded like "Name=Rv0667" in the GFF then this parameter should be "Name"')
+parser.add_argument('--gene-id-prefix',default="gene_id",help='Gene ID prefix. E.g. if the genes are coded like "Name=Rv0667" in the GFF then this parameter should be "Name"')
 parser.add_argument('--no-clean',action="store_true",help='Don\'t clean up temp files')
 parser.set_defaults(func=main)
 
